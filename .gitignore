@@ -1,0 +1,10 @@
+# Dependências e Logs
+node_modules
+npm-debug.log
+
+# Arquivos de Ambiente (MUITO IMPORTANTE)
+.env
+
+# Pastas de build e de sistema
+dist
+.vscode

@@ -1,0 +1,75 @@
+### ==============================================
+### AUTENTICAÇÃO
+### ==============================================
+
+### 1. Registrar uma nova empresa e usuário
+# Esta rota pode ser executada apenas uma vez para cada email
+POST http://localhost:4000/register
+Content-Type: application/json
+
+{
+  "companyName": "Pizzaria do Bairro",
+  "userEmail": "dono@pizzaria.com",
+  "password": "senhaforte123"
+}
+
+###
+
+### 2. Fazer Login para obter o Token
+# Damos um nome 'login' a esta requisição para capturar a resposta
+# @name login
+POST http://localhost:4000/login
+Content-Type: application/json
+
+{
+  "email": "dono@pizzaria.com",
+  "password": "senhaforte123"
+}
+
+###
+
+# Captura o token da resposta do login e o salva na variável 'token'
+@token = {{login.response.body.token}}
+
+### ==============================================
+### CRUD DE CLIENTES
+### ==============================================
+
+### 3. Cadastrar um novo cliente
+# Damos um nome 'createClient' a esta requisição para capturar o ID
+# @name createClient
+POST http://localhost:4000/clients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Cliente Exemplo",
+  "cpf": "123.456.789-00",
+  "birth_date": "1990-05-15"
+}
+
+###
+
+# Captura o ID da resposta do cadastro e o salva na variável 'clientId'
+@clientId = {{createClient.response.body.id}}
+
+### 4. Listar todos os clientes da empresa
+GET http://localhost:4000/clients
+Authorization: Bearer {{token}}
+
+### 5. Atualizar o cliente que acabamos de criar
+# Usamos a variável 'clientId' na URL, sem precisar copiar e colar!
+PUT http://localhost:4000/clients/{{clientId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Cliente Exemplo Atualizado",
+  "cpf": "999.888.777-66",
+  "birth_date": "1990-05-15"
+}
+
+### 6. Deletar o cliente que acabamos de criar
+# Usamos a mesma variável 'clientId' aqui também!
+DELETE http://localhost:4000/clients/{{clientId}}
+Authorization: Bearer {{token}}
