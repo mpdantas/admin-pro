@@ -1,4 +1,3 @@
-// src/pages/ClientEditPage.jsx
 import { useState, useEffect } from 'react';
 import { Box, Button, Paper, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
@@ -9,10 +8,11 @@ import AddressTab from '../components/client-form/AddressTab';
 import VehicleTab from '../components/client-form/VehicleTab';
 import ObservationsTab from '../components/client-form/ObservationsTab';
 
+// O mesmo objeto de estado inicial completo
 const initialFormData = {
-  general: { name: '', cpf: '', rg: '', birth_date: '' },
-  address: { zip_code: '', street: '', number: '', neighborhood: '', city: '', state: '' },
-  vehicle: { brand: '', model: '', year: '', plate: '' },
+  general: { name: '', birth_date: '', cpf: '', rg: '', cnh: '', cnpj: '', celular: '', email: '' },
+  address: { zip_code: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
+  vehicle: { brand: '', model: '', plate: '', cor: '', ano_modelo: '', ano_fabricacao: '', chassi: '', renavam: '' },
   observations: '',
 };
 
@@ -28,17 +28,13 @@ export default function ClientEditPage() {
     const token = localStorage.getItem('authToken');
     api.get(`/clients/${id}`, { headers: { Authorization: `Bearer ${token}` }})
       .then(response => {
-        const client = response.data;
+        const { general, address, vehicle } = response.data;
+        // Preenche o formulário com os dados recebidos, garantindo que não haja valores nulos
         setFormData({
-          general: { 
-            name: client.name || '', 
-            cpf: client.cpf || '', 
-            rg: client.rg || '', 
-            birth_date: client.birth_date ? client.birth_date.split('T')[0] : '' // Formata a data
-          },
-          address: initialFormData.address, // Lógica para buscar endereço virá depois
-          vehicle: initialFormData.vehicle,   // Lógica para buscar veículo virá depois
-          observations: client.observations || '',
+          general: { ...initialFormData.general, ...general },
+          address: { ...initialFormData.address, ...address },
+          vehicle: { ...initialFormData.vehicle, ...vehicle },
+          observations: general.observations || '',
         });
       })
       .catch(error => {
@@ -50,11 +46,8 @@ export default function ClientEditPage() {
       });
   }, [id]);
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
+  const handleTabChange = (event, newValue) => setActiveTab(newValue);
 
-  // AGORA COM A LÓGICA CORRETA
   const handleInputChange = (tab, field, value) => {
     if (tab === 'observations') {
       setFormData(prev => ({ ...prev, observations: value }));
@@ -66,23 +59,11 @@ export default function ClientEditPage() {
     }
   };
   
-  // AGORA COM A LÓGICA CORRETA
   const handleSubmit = async (event) => {
     event.preventDefault();
     const token = localStorage.getItem('authToken');
-    
-    // ATENÇÃO: A rota PUT que temos no backend hoje é a simples.
-    // Vamos montar o objeto de dados como ela espera.
-    const clientDataToUpdate = {
-      name: formData.general.name,
-      cpf: formData.general.cpf,
-      rg: formData.general.rg,
-      birth_date: formData.general.birth_date,
-      // 'observations' não está na rota PUT simples, vamos ignorá-lo por enquanto
-    };
-
     try {
-      await api.put(`/clients/${id}`, clientDataToUpdate, {
+      await api.put(`/clients/${id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Cliente atualizado com sucesso!');
@@ -107,7 +88,6 @@ export default function ClientEditPage() {
           <Tab label="Dados do Veículo" />
           <Tab label="Observações" />
         </Tabs>
-
         <Box sx={{ p: 3 }}>
           {activeTab === 0 && <GeneralDataTab data={formData.general} onChange={handleInputChange} />}
           {activeTab === 1 && <AddressTab data={formData.address} onChange={handleInputChange} />}

@@ -1,20 +1,18 @@
-// src/pages/ClientCreatePage.jsx
 import { useState } from 'react';
 import { Box, Button, Paper, Typography, Tabs, Tab } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-// Importando os componentes de cada aba que vamos criar
-import GeneralDataTab from "../components/client-form/GeneralDataTab";
-import AddressTab from "../components/client-form/AddressTab";
-import VehicleTab from "../components/client-form/VehicleTab";
-import ObservationsTab from "../components/client-form/ObservationsTab";
+import GeneralDataTab from '../components/client-form/GeneralDataTab';
+import AddressTab from '../components/client-form/AddressTab';
+import VehicleTab from '../components/client-form/VehicleTab';
+import ObservationsTab from '../components/client-form/ObservationsTab';
 
-// Estado inicial do formulário, bem organizado
+// Objeto de estado inicial agora com todos os novos campos
 const initialFormData = {
-  general: { name: '', cpf: '', rg: '' },
-  address: { zip_code: '', street: '', number: '', neighborhood: '', city: '', state: '' },
-  vehicle: { brand: '', model: '', year: '', plate: '' },
+  general: { name: '', birth_date: '', cpf: '', rg: '', cnh: '', cnpj: '', celular: '', email: '' },
+  address: { zip_code: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
+  vehicle: { brand: '', model: '', plate: '', cor: '', ano_modelo: '', ano_fabricacao: '', chassi: '', renavam: '' },
   observations: '',
 };
 
@@ -42,7 +40,6 @@ export default function ClientCreatePage() {
     event.preventDefault();
     const token = localStorage.getItem('authToken');
     try {
-      // Enviamos o objeto formData completo para o backend
       await api.post('/clients', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -64,7 +61,6 @@ export default function ClientCreatePage() {
           <Tab label="Dados do Veículo" />
           <Tab label="Observações" />
         </Tabs>
-
         <Box sx={{ p: 3 }}>
           {activeTab === 0 && <GeneralDataTab data={formData.general} onChange={handleInputChange} />}
           {activeTab === 1 && <AddressTab data={formData.address} onChange={handleInputChange} />}

@@ -12,28 +12,21 @@ export default function ClientListPage() {
   useEffect(() => {
     async function fetchClients() {
       const token = localStorage.getItem('authToken');
-
       if (!token) {
-        alert("Você não está autenticado. Por favor, faça login.");
         navigate('/login');
         return;
       }
-
       try {
         const response = await api.get('/clients', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setClients(response.data);
       } catch (error) {
         console.error("Erro ao buscar clientes:", error);
-        alert("Sua sessão pode ter expirado. Por favor, faça login novamente.");
         localStorage.removeItem('authToken');
         navigate('/login');
       }
     }
-
     fetchClients();
   }, [navigate]);
 
@@ -54,29 +47,22 @@ export default function ClientListPage() {
             <TableRow>
               <TableCell>Nome</TableCell>
               <TableCell>CPF</TableCell>
-              <TableCell>Data de Nascimento</TableCell>
-              <TableCell align="right">Ações</TableCell> {/* Nova Coluna */}
+              <TableCell>E-mail</TableCell> {/* Trocamos Data de Nascimento por E-mail para ser mais útil na lista */}
+              <TableCell align="right">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
+            {/* A chave é garantir que o .map comece logo após o TableBody */}
             {clients.map((client) => (
-              <TableRow key={client.id}>
+              <TableRow key={client.id} hover> {/* Adicionamos 'hover' para um efeito visual */}
                 <TableCell>{client.name}</TableCell>
                 <TableCell>{client.cpf}</TableCell>
-                <TableCell>{new Date(client.birth_date).toLocaleDateString()}</TableCell>
-                {/* Novas Ações */}
+                <TableCell>{client.email}</TableCell>
                 <TableCell align="right">
-                  <IconButton 
-                    component={Link} 
-                    to={`/clients/edit/${client.id}`}
-                    aria-label="edit"
-                  >
+                  <IconButton component={Link} to={`/clients/edit/${client.id}`} aria-label="edit">
                     <EditIcon />
                   </IconButton>
-                  <IconButton 
-                    onClick={() => alert(`Funcionalidade de deletar o cliente ${client.name} ainda não implementada.`)}
-                    aria-label="delete"
-                  >
+                  <IconButton onClick={() => alert(`Deletar o cliente ${client.name} (não implementado)`)} aria-label="delete">
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
