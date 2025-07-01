@@ -1,6 +1,7 @@
 // --- IMPORTS ---
-require('dotenv').config(); // ESSA LINHA DEVE SER SEMPRE A PRIMEIRA
+require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -12,6 +13,7 @@ const PORT = 4000;
 
 // --- MIDDLEWARES ---
 app.use(express.json());
+app.use(cors());
 
 // --- CONEXÃO COM O BANCO DE DADOS ---
 const pool = new Pool({
@@ -19,15 +21,12 @@ const pool = new Pool({
 });
 
 // =================================================================
-// --- ROTAS PÚBLICAS E DE TESTE ---
+// --- ROTAS DE AUTENTICAÇÃO E TESTE ---
 // =================================================================
 app.get('/', (req, res) => {
   res.send('API do Admin Pro está funcionando!');
 });
 
-// =================================================================
-// --- ROTAS DE AUTENTICAÇÃO ---
-// =================================================================
 app.post('/register', async (req, res) => {
   const { companyName, userEmail, password } = req.body;
   if (!companyName || !userEmail || !password) {
@@ -86,26 +85,45 @@ app.get('/me', authMiddleware, (req, res) => {
 // --- ROTAS DE CLIENTES (CRUD) ---
 // -----------------------------------------------------------------
 
-// CREATE - Cadastrar um novo cliente
+// CREATE - Cadastrar um novo cliente com dados completos
 app.post('/clients', authMiddleware, async (req, res) => {
-  const { companyId } = req; 
-  const { name, cpf, rg, cnpj, birth_date } = req.body;
-  if (!name) {
+  const { companyId } = req;
+  const { general, address, vehicle, observations } = req.body;
+  if (!general || !general.name) {
     return res.status(400).json({ message: 'O nome do cliente é obrigatório.' });
   }
+  const client = await pool.connect();
   try {
-    const newClient = await pool.query(
-      `INSERT INTO clients (name, cpf, rg, cnpj, birth_date, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, cpf, rg, cnpj, birth_date, companyId]
+    await client.query('BEGIN');
+    const newClientResult = await client.query(
+      `INSERT INTO clients (name, cpf, rg, observations, company_id) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [general.name, general.cpf, general.rg, observations, companyId]
     );
-    res.status(201).json(newClient.rows[0]);
+    const newClient = newClientResult.rows[0];
+    if (address) {
+      await client.query(
+        `INSERT INTO addresses (client_id, zip_code, street, number, complement, neighborhood, city, state) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [newClient.id, address.zip_code, address.street, address.number, address.complement, address.neighborhood, address.city, address.state]
+      );
+    }
+    if (vehicle) {
+      await client.query(
+        `INSERT INTO vehicles (client_id, brand, model, year, plate) VALUES ($1, $2, $3, $4, $5)`,
+        [newClient.id, vehicle.brand, vehicle.model, vehicle.year, vehicle.plate]
+      );
+    }
+    await client.query('COMMIT');
+    res.status(201).json(newClient);
   } catch (error) {
-    console.error('Erro ao cadastrar cliente:', error);
+    await client.query('ROLLBACK');
+    console.error('Erro ao cadastrar cliente completo:', error);
     res.status(500).json({ message: 'Erro interno ao cadastrar cliente.' });
+  } finally {
+    client.release();
   }
 });
 
-// READ - Listar todos os clientes da empresa do usuário logado
+// READ (ALL) - Listar todos os clientes da empresa
 app.get('/clients', authMiddleware, async (req, res) => {
   const { companyId } = req;
   try {
@@ -117,7 +135,26 @@ app.get('/clients', authMiddleware, async (req, res) => {
   }
 });
 
-// UPDATE - Atualizar um cliente existente
+// NOVO: READ (SINGLE) - Buscar um único cliente pelo ID
+app.get('/clients/:id', authMiddleware, async (req, res) => {
+  const { companyId } = req;
+  const { id: clientId } = req.params;
+  try {
+    const clientResult = await pool.query(
+      'SELECT * FROM clients WHERE id = $1 AND company_id = $2',
+      [clientId, companyId]
+    );
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Cliente não encontrado.' });
+    }
+    res.json(clientResult.rows[0]);
+  } catch (error) {
+    console.error('Erro ao buscar cliente:', error);
+    res.status(500).json({ message: 'Erro interno ao buscar cliente.' });
+  }
+});
+
+// UPDATE - (Ainda com a versão antiga, podemos atualizar depois)
 app.put('/clients/:id', authMiddleware, async (req, res) => {
   const { companyId } = req;
   const { id: clientId } = req.params;
