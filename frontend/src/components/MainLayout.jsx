@@ -4,11 +4,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Routes, Route, Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 
-// Nossos componentes de página
 import ClientSearchPage from '../pages/ClientSearchPage';
 import ClientManagerPage from '../pages/ClientManagerPage';
-
-// Nosso componente de rodapé
 import Footer from './Footer';
 
 const drawerWidth = 240;
@@ -24,11 +21,9 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <img src="/logo.png" alt="Admin Pro Logo" style={{ height: '40px', marginRight: '16px' }} />
-          {/* 👇 ALTERAÇÃO AQUI 👇 */}
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Admin Pro
           </Typography>
@@ -37,7 +32,6 @@ export default function MainLayout() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
       <Drawer
         variant="permanent"
         sx={{ width: drawerWidth, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' } }}
@@ -49,14 +43,13 @@ export default function MainLayout() {
               <ListItemIcon><DashboardIcon /></ListItemIcon>
               <ListItemText primary="Painel" />
             </ListItemButton>
-            <ListItemButton component={RouterLink} to="/clients/search" selected>
+            <ListItemButton component={RouterLink} to="/clients/search">
               <ListItemIcon><PeopleIcon /></ListItemIcon>
               <ListItemText primary="Clientes" />
             </ListItemButton>
           </List>
         </Box>
       </Drawer>
-
       <Box
         component="main"
         sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}

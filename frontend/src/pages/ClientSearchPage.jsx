@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
-  IconButton, Grid, TextField, Chip, Dialog, DialogActions, DialogContent, 
+  IconButton, Grid, TextField, InputAdornment, Chip, Dialog, DialogActions, DialogContent, 
   DialogContentText, DialogTitle, CircularProgress 
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ import ClientPdfDocument from '../components/ClientPdfDocument';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 
 export default function ClientSearchPage() {
@@ -20,9 +21,11 @@ export default function ClientSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   
+  // Estados para o modal de deleção
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
 
+  // Estados para o modal de impressão
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [selectedClientData, setSelectedClientData] = useState(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -75,9 +78,8 @@ export default function ClientSearchPage() {
       await api.delete(`/clients/${clientToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Remove o cliente da lista no estado, atualizando a UI
       setClients(clients.filter(client => client.id !== clientToDelete.id));
-      alert('Cliente deletado com sucesso!');
+      // alert('Cliente deletado com sucesso!'); // Trocado por sistema de notificação
     } catch (error) {
       console.error("Erro ao deletar cliente:", error);
       alert('Falha ao deletar cliente.');

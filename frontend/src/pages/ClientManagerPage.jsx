@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Box, Button, Paper, Typography, Tabs, Tab, CircularProgress, Grid } from '@mui/material';
+import { Box, Button, Paper, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import * as yup from 'yup';
-
+import useNotificationStore from '../stores/notificationStore';
 import api from '../services/api';
 import GeneralDataTab from '../components/client-form/GeneralDataTab';
 import AddressTab from '../components/client-form/AddressTab';
@@ -12,7 +12,6 @@ import ObservationsTab from '../components/client-form/ObservationsTab';
 import ClientPdfDocument from '../components/ClientPdfDocument';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
-// --- ESQUEMA DE VALIDAÇÃO COM YUP ---
 const validationSchema = yup.object({
   general: yup.object({
     name: yup.string().required('O nome é obrigatório.'),
@@ -21,16 +20,11 @@ const validationSchema = yup.object({
     cpf: yup.string().matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, { message: 'Formato de CPF inválido.', excludeEmptyString: true }),
     cnpj: yup.string().matches(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, { message: 'Formato de CNPJ inválido.', excludeEmptyString: true }),
   }),
-  address: yup.object({
-    zip_code: yup.string().matches(/^\d{5}-\d{3}$/, { message: 'Formato de CEP inválido.', excludeEmptyString: true }),
-  }),
   vehicle: yup.object({
-     plate: yup.string().required('A placa do veículo é obrigatória.'),
+    plate: yup.string().required('A placa do veículo é obrigatória.'),
   }),
-  observations: yup.string(),
 });
 
-// --- ESTADO INICIAL DO FORMULÁRIO ---
 const initialFormData = {
   general: { name: '', birth_date: '', cpf: '', rg: '', cnh: '', cnpj: '', celular: '', email: '' },
   address: { zip_code: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
@@ -41,36 +35,37 @@ const initialFormData = {
 export default function ClientManagerPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const { showNotification } = useNotificationStore();
   const [formData, setFormData] = useState(initialFormData);
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(mode === 'edit');
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && id) {
       const token = localStorage.getItem('authToken');
       setLoading(true);
-      api.get(`/clients/${id}`, { headers: { Authorization: `Bearer ${token}` }})
+      api.get(`/clients/${id}`, { headers: { Authorization: `Bearer ${token}` } })
         .then(response => {
-          const { general, address, vehicle } = response.data;
+          const { general, address, vehicle, observations } = response.data;
           const birthDate = general.birth_date ? general.birth_date.split('T')[0] : '';
-          
           setFormData({
             general: { ...initialFormData.general, ...general, birth_date: birthDate },
             address: { ...initialFormData.address, ...(address || {}) },
             vehicle: { ...initialFormData.vehicle, ...(vehicle || {}) },
-            observations: general.observations || '',
+            observations: observations || '',
           });
         })
-        .catch(error => { console.error("Erro ao buscar dados do cliente:", error); alert("Não foi possível carregar os dados do cliente."); })
+        .catch(error => {
+          console.error("Erro ao buscar dados do cliente:", error);
+          showNotification({ message: "Não foi possível carregar os dados do cliente.", severity: 'error' });
+        })
         .finally(() => { setLoading(false); });
     }
-  }, [id, mode]);
+  }, [id, mode, showNotification]);
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
+  const handleTabChange = (event, newValue) => setActiveTab(newValue);
 
   const handleInputChange = (tab, field, value) => {
     const errorPath = field ? `${tab}.${field}` : tab;
@@ -81,40 +76,37 @@ export default function ClientManagerPage({ mode }) {
         return newErrors;
       });
     }
-
     if (tab === 'observations') {
       setFormData(prev => ({ ...prev, observations: value }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [tab]: { ...prev[tab], [field]: value }
-      }));
+      setFormData(prev => ({ ...prev, [tab]: { ...prev[tab], [field]: value } }));
     }
   };
-  
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true);
     try {
       setErrors({});
       await validationSchema.validate(formData, { abortEarly: false });
-
       const token = localStorage.getItem('authToken');
       const method = mode === 'edit' ? 'put' : 'post';
       const url = mode === 'edit' ? `/clients/${id}` : '/clients';
       await api[method](url, formData, { headers: { Authorization: `Bearer ${token}` } });
-      alert(`Cliente ${mode === 'edit' ? 'atualizado' : 'salvo'} com sucesso!`);
+      showNotification({ message: `Cliente ${mode === 'edit' ? 'atualizado' : 'salvo'} com sucesso!`, severity: 'success' });
       navigate('/clients/search');
-
     } catch (err) {
       if (err instanceof yup.ValidationError) {
         const newErrors = {};
         err.inner.forEach((error) => { newErrors[error.path] = error.message; });
         setErrors(newErrors);
-        alert("Por favor, corrija os erros indicados no formulário.");
+        showNotification({ message: "Por favor, corrija os erros indicados no formulário.", severity: 'warning' });
       } else {
         console.error("Erro ao salvar cliente:", err);
-        alert("Falha ao salvar cliente.");
+        showNotification({ message: "Falha ao salvar cliente.", severity: 'error' });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -150,7 +142,9 @@ export default function ClientManagerPage({ mode }) {
         </Box>
       </Paper>
       <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-        <Button type="submit" variant="contained" size="large">{mode === 'edit' ? 'Salvar Alterações' : 'Salvar Cliente'}</Button>
+        <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+          {isSubmitting ? 'Salvando...' : (mode === 'edit' ? 'Salvar Alterações' : 'Salvar Cliente')}
+        </Button>
         <Button variant="outlined" size="large" onClick={() => { setFormData(initialFormData); navigate('/clients'); }}>Novo</Button>
       </Box>
     </Box>
