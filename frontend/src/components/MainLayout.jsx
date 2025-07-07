@@ -1,15 +1,14 @@
-// frontend/src/components/MainLayout.jsx
 import { AppBar, Box, CssBaseline, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Routes, Route, Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 
-// Importa as páginas que serão usadas dentro do layout
+// Nossos componentes de página
 import ClientSearchPage from '../pages/ClientSearchPage';
 import ClientManagerPage from '../pages/ClientManagerPage';
 
-// Importa o componente de rodapé
+// Nosso componente de rodapé
 import Footer from './Footer';
 
 const drawerWidth = 240;
@@ -25,17 +24,20 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <img src="/logo.png" alt="Admin Pro Logo" style={{ height: '40px', marginRight: '16px' }} />
+          {/* 👇 ALTERAÇÃO AQUI 👇 */}
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Administrador Profissional
+            Admin Pro
           </Typography>
           <IconButton color="inherit" onClick={handleLogout} aria-label="logout">
             <LogoutIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
+
       <Drawer
         variant="permanent"
         sx={{ width: drawerWidth, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' } }}
@@ -54,6 +56,7 @@ export default function MainLayout() {
           </List>
         </Box>
       </Drawer>
+
       <Box
         component="main"
         sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}

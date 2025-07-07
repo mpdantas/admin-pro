@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
-  IconButton, Grid, TextField, InputAdornment, Chip, Dialog, DialogActions, DialogContent, 
+  IconButton, Grid, TextField, Chip, Dialog, DialogActions, DialogContent, 
   DialogContentText, DialogTitle, CircularProgress 
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -13,7 +13,6 @@ import ClientPdfDocument from '../components/ClientPdfDocument';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 
 export default function ClientSearchPage() {
@@ -54,6 +53,10 @@ export default function ClientSearchPage() {
     (client.cpf?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
+  const handleRowClick = (clientId) => {
+    navigate(`/clients/edit/${clientId}`);
+  };
+
   const handleClickOpenDeleteDialog = (client, event) => {
     event.stopPropagation();
     setClientToDelete(client);
@@ -72,8 +75,9 @@ export default function ClientSearchPage() {
       await api.delete(`/clients/${clientToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      // Remove o cliente da lista no estado, atualizando a UI
       setClients(clients.filter(client => client.id !== clientToDelete.id));
-      // alert('Cliente deletado com sucesso!');
+      alert('Cliente deletado com sucesso!');
     } catch (error) {
       console.error("Erro ao deletar cliente:", error);
       alert('Falha ao deletar cliente.');
@@ -106,10 +110,6 @@ export default function ClientSearchPage() {
     setSelectedClientData(null);
   };
 
-  const handleRowClick = (clientId) => {
-    navigate(`/clients/edit/${clientId}`);
-  };
-
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 2 }}>CLIENTES</Typography>
@@ -126,7 +126,6 @@ export default function ClientSearchPage() {
              <Button variant="contained" color="success" fullWidth><SearchIcon sx={{ mr: 1 }} />Pesquisar</Button>
           </Grid>
           <Grid item xs={12} md={2} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, alignItems: 'center' }}>
-             {/* O botão de exportar foi removido daqui */}
              <Chip label={`TOTAL: ${filteredClients.length}`} sx={{ fontWeight: 'bold' }} />
           </Grid>
         </Grid>
@@ -159,7 +158,7 @@ export default function ClientSearchPage() {
         </Table>
       </TableContainer>
 
-      {/* Dialog de Deleção */}
+      {/* DIALOG DE DELEÇÃO */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
@@ -173,7 +172,7 @@ export default function ClientSearchPage() {
         </DialogActions>
       </Dialog>
       
-      {/* Dialog de Impressão */}
+      {/* DIALOG DE IMPRESSÃO */}
       <Dialog open={printDialogOpen} onClose={handleClosePrintDialog}>
         <DialogTitle>Gerar Ficha do Cliente</DialogTitle>
         <DialogContent sx={{ minWidth: 400, textAlign: 'center' }}>

@@ -1,27 +1,24 @@
-// frontend/src/App.jsx
+// src/App.jsx
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-
-// Importamos nossas duas telas principais: Login e o Layout
 import LoginPage from './pages/LoginPage';
 import MainLayout from './components/MainLayout';
+import GlobalSnackbar from './components/GlobalSnackbar'; // ⬅️ Importamos
 
 function App() {
   const location = useLocation();
   const token = localStorage.getItem('authToken');
 
-  if (!token && location.pathname !== '/login') {
-    return <Navigate to="/login" />;
-  }
-  
-  if (token && location.pathname === '/login') {
-    return <Navigate to="/" />;
-  }
+  if (!token && location.pathname !== '/login') { return <Navigate to="/login" />; }
+  if (token && location.pathname === '/login') { return <Navigate to="/" />; }
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/*" element={<MainLayout />} />
-    </Routes>
+    <> {/* Usamos um Fragment para agrupar os componentes */}
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/*" element={<MainLayout />} />
+      </Routes>
+      <GlobalSnackbar /> {/* ⬅️ Adicionamos a notificação aqui */}
+    </>
   );
 }
 

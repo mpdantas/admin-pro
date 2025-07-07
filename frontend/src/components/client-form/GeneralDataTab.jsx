@@ -2,8 +2,7 @@ import React from 'react';
 import { Grid, TextField, Typography, Box } from '@mui/material';
 import { IMaskInput } from 'react-imask';
 
-// --- Componentes de Máscara (Agora completos) ---
-
+// --- Componentes de Máscara ---
 const CpfMask = React.forwardRef(function CpfMask(props, ref) {
   const { onChange, ...other } = props;
   return (
@@ -44,9 +43,7 @@ const CelularMask = React.forwardRef(function CelularMask(props, ref) {
 });
 
 
-export default function GeneralDataTab({ data, onChange }) {
-  
-  // Formata a data de cadastro para exibição
+export default function GeneralDataTab({ data, onChange, errors }) {
   const registrationDate = data.created_at 
     ? new Date(data.created_at).toLocaleDateString('pt-BR', {
         day: '2-digit', month: '2-digit', year: 'numeric', 
@@ -57,53 +54,73 @@ export default function GeneralDataTab({ data, onChange }) {
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid xs={12} sm={8}>
-          <TextField fullWidth required label="Nome" value={data.name || ''} onChange={(e) => onChange('general', 'name', e.target.value)} />
-        </Grid>
-        <Grid xs={12} sm={4}>
+        <Grid item xs={12} sm={8}>
           <TextField
-            fullWidth
-            label="Data de Cadastro"
-            value={registrationDate}
-            InputProps={{ readOnly: true }}
-            variant="filled"
-            size="small"
+            fullWidth required label="Nome" name="general.name"
+            value={data.name || ''}
+            onChange={(e) => onChange('general', 'name', e.target.value)}
+            error={!!errors['general.name']}
+            helperText={errors['general.name']}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth label="Data de Cadastro" value={registrationDate}
+            InputProps={{ readOnly: true }} variant="filled" size="small"
           />
         </Grid>
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="CPF" value={data.cpf || ''} onChange={(e) => onChange('general', 'cpf', e.target.value)} InputProps={{ inputComponent: CpfMask }} />
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth label="CPF" name="general.cpf" value={data.cpf || ''}
+            onChange={(e) => onChange('general', 'cpf', e.target.value)}
+            InputProps={{ inputComponent: CpfMask }}
+            error={!!errors['general.cpf']} helperText={errors['general.cpf']}
+          />
         </Grid>
-        <Grid xs={12} sm={4}>
+        <Grid item xs={12} sm={4}>
           <TextField fullWidth label="RG" value={data.rg || ''} onChange={(e) => onChange('general', 'rg', e.target.value)} />
         </Grid>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="CNPJ" value={data.cnpj || ''} onChange={(e) => onChange('general', 'cnpj', e.target.value)} InputProps={{ inputComponent: CnpjMask }} />
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth label="CNPJ" name="general.cnpj" value={data.cnpj || ''}
+            onChange={(e) => onChange('general', 'cnpj', e.target.value)}
+            InputProps={{ inputComponent: CnpjMask }}
+            error={!!errors['general.cnpj']} helperText={errors['general.cnpj']}
+          />
         </Grid>
       </Grid>
       
       <Grid container spacing={2}>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField fullWidth label="CNH" value={data.cnh || ''} onChange={(e) => onChange('general', 'cnh', e.target.value)} />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Data de Nascimento" type="date" value={data.birth_date || ''} onChange={(e) => onChange('general', 'birth_date', e.target.value)} InputLabelProps={{ shrink: true }} />
         </Grid>
       </Grid>
       
-      <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
-        Contatos
-      </Typography>
+      <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>Contatos</Typography>
+
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid xs={12}>
-          <TextField fullWidth label="Celular" value={data.celular || ''} onChange={(e) => onChange('general', 'celular', e.target.value)} InputProps={{ inputComponent: CelularMask }} />
+        <Grid item xs={12}>
+          <TextField
+            fullWidth label="Celular" name="general.celular" value={data.celular || ''}
+            onChange={(e) => onChange('general', 'celular', e.target.value)}
+            InputProps={{ inputComponent: CelularMask }}
+            error={!!errors['general.celular']} helperText={errors['general.celular']}
+          />
         </Grid>
       </Grid>
       <Grid container spacing={2}>
-         <Grid xs={12}>
-          <TextField fullWidth label="E-mail" type="email" value={data.email || ''} onChange={(e) => onChange('general', 'email', e.target.value)} />
+         <Grid item xs={12}>
+          <TextField
+            fullWidth required label="E-mail" type="email" name="general.email"
+            value={data.email || ''} onChange={(e) => onChange('general', 'email', e.target.value)}
+            error={!!errors['general.email']} helperText={errors['general.email']}
+          />
         </Grid>
       </Grid>
     </Box>
