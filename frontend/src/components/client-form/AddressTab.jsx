@@ -1,84 +1,38 @@
-import React from 'react'; // Precisamos importar o React para criar o componente da máscara
-import { Grid, TextField, Box } from '@mui/material';
-import { IMaskInput } from 'react-imask'; // Importamos a base da máscara
-import axios from 'axios';
+import React, { useState } from 'react';
+import { Grid, TextField, Select, MenuItem, InputLabel, FormControl, Box, RadioGroup, FormControlLabel, Radio, FormLabel } from '@mui/material';
+import { IMaskInput } from 'react-imask';
 
-// --- Componente customizado para a máscara de CEP ---
-const CepMask = React.forwardRef(function CepMask(props, ref) {
-  const { onChange, ...other } = props;
-  return (
-    <IMaskInput
-      {...other}
-      mask="00000-000" // Formato do CEP
-      definitions={{
-        '#': /[1-9]/,
-      }}
-      inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: props.name, value } })}
-      overwrite
-    />
-  );
+const carBrands = [ "Fiat", "Chevrolet", "Volkswagen", "Ford", "Hyundai", "Toyota", "Honda", "Renault", "Jeep", "Nissan", "Citroën", "Peugeot", "Mitsubishi", "Mercedes-Benz", "BMW", "Audi", "Outra" ];
+
+const PlacaMask = React.forwardRef(function PlacaMask(props, ref) {
+  const { onChange, plateType, ...other } = props;
+  const mask = plateType === 'mercosul' ? 'AAA0A00' : 'AAA-0000';
+  return (<IMaskInput {...other} mask={mask} definitions={{ 'A': /[a-zA-Z]/, '0': /[0-9]/ }} prepare={(str) => str.toUpperCase()} inputRef={ref} onAccept={(value) => onChange({ target: { name: props.name, value } })} overwrite />);
 });
 
-
-export default function AddressTab({ data, onChange }) {
-  
-  const handleCepBlur = async (event) => {
-    const cep = event.target.value.replace(/\D/g, '');
-    if (cep.length !== 8) return;
-    try {
-      const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
-      if (!response.data.erro) {
-        onChange('address', 'street', response.data.logradouro);
-        onChange('address', 'neighborhood', response.data.bairro);
-        onChange('address', 'city', response.data.localidade);
-        onChange('address', 'state', response.data.uf);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar CEP:", error);
-    }
-  };
+export default function VehicleTab({ data, onChange }) {
+  const [plateType, setPlateType] = useState('mercosul');
 
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid xs={12}>
-          <TextField fullWidth label="Endereço / Rua" value={data.street || ''} onChange={(e) => onChange('address', 'street', e.target.value)} />
-        </Grid>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid xs={12} sm={6}><FormControl fullWidth sx={{ minWidth: 120 }}><InputLabel id="brand-select-label">Marca</InputLabel><Select labelId="brand-select-label" label="Marca" value={data.brand || ''} onChange={(e) => onChange('vehicle', 'brand', e.target.value)}>{carBrands.map(brand => (<MenuItem key={brand} value={brand}>{brand}</MenuItem>))}</Select></FormControl></Grid>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Modelo" value={data.model || ''} onChange={(e) => onChange('vehicle', 'model', e.target.value)} /></Grid>
       </Grid>
-
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid xs={12} sm={4}>
-           {/* 👇 Aplicamos a máscara aqui 👇 */}
-          <TextField
-            fullWidth
-            label="CEP"
-            value={data.zip_code || ''}
-            onChange={(e) => onChange('address', 'zip_code', e.target.value)}
-            onBlur={handleCepBlur}
-            InputProps={{
-              inputComponent: CepMask,
-            }}
-          />
-        </Grid>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="Número" value={data.number || ''} onChange={(e) => onChange('address', 'number', e.target.value)} />
-        </Grid>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="Complemento" value={data.complement || ''} onChange={(e) => onChange('address', 'complement', e.target.value)} />
-        </Grid>
+      <Grid container spacing={3} sx={{ mb: 2, alignItems: 'center' }}>
+        <Grid xs={12} sm={6}><FormControl><FormLabel>Padrão da Placa</FormLabel><RadioGroup row value={plateType} onChange={(e) => setPlateType(e.target.value)}><FormControlLabel value="mercosul" control={<Radio />} label="Mercosul" /><FormControlLabel value="antiga" control={<Radio />} label="Antiga" /></RadioGroup></FormControl></Grid>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Placa" value={data.plate || ''} onChange={(e) => onChange('vehicle', 'plate', e.target.value)} InputProps={{ inputComponent: PlacaMask, inputProps: { plateType: plateType } }} /></Grid>
       </Grid>
-
-      <Grid container spacing={2}>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="Bairro" value={data.neighborhood || ''} onChange={(e) => onChange('address', 'neighborhood', e.target.value)} />
-        </Grid>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="Cidade" value={data.city || ''} onChange={(e) => onChange('address', 'city', e.target.value)} />
-        </Grid>
-        <Grid xs={12} sm={4}>
-          <TextField fullWidth label="Estado" value={data.state || ''} onChange={(e) => onChange('address', 'state', e.target.value)} />
-        </Grid>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Cor" value={data.cor || ''} onChange={(e) => onChange('vehicle', 'cor', e.target.value)} /></Grid>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Ano Fabricação" type="number" value={data.ano_fabricacao || ''} onChange={(e) => onChange('vehicle', 'ano_fabricacao', e.target.value)} /></Grid>
+      </Grid>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Ano Modelo" type="number" value={data.ano_modelo || ''} onChange={(e) => onChange('vehicle', 'ano_modelo', e.target.value)} /></Grid>
+        <Grid xs={12} sm={6}><TextField fullWidth label="Renavam" value={data.renavam || ''} onChange={(e) => onChange('vehicle', 'renavam', e.target.value)} /></Grid>
+      </Grid>
+      <Grid container spacing={3}>
+        <Grid xs={12}><TextField fullWidth label="Chassi" value={data.chassi || ''} onChange={(e) => onChange('vehicle', 'chassi', e.target.value)} /></Grid>
       </Grid>
     </Box>
   );
